@@ -39,6 +39,8 @@ func main() {
 
 func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	switch m.Content {
+	case "!villa":
+		PostGigaVilla(s, m)
 	case "!råtta", "!rat":
 		PostRatImage(s, m)
 	case "!gud", "!god":
@@ -48,4 +50,5 @@ func messageHandler(s *discordgo.Session, m *discordgo.MessageCreate) {
 	case "!stop", "!disconnect":
 		stopChan <- true
 	}
+
 }
