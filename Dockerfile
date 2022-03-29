@@ -17,4 +17,4 @@ RUN go install -v ./...
 RUN go build -o ./rattbot *.go
 
 # Run the executable
-CMD ["./entrypoint.sh"]
+CMD ["./rattbot"]

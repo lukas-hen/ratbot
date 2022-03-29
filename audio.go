@@ -11,8 +11,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var buffer = make([][]byte, 0)
-
 func PlayLocalAudio(s *discordgo.Session, m *discordgo.MessageCreate, filePath string, stopChan chan bool) {
 	vs, err := findUserVoiceState(s, m.Author.ID)
 	if err != nil {
@@ -57,26 +55,30 @@ func playSound(fp string, s *discordgo.Session, guildID, channelID string, stop 
 	// Start speaking.
 	vc.Speaking(true)
 
-	//buff := make([]byte, 100)
 	var opuslen int16
 
 	// Send the buffer data.
 	for {
 		// Read opus frame length from dca file.
 		err = binary.Read(file, binary.LittleEndian, &opuslen)
-		if opuslen < 0 {
-			opuslen = 0
-		}
+
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
 			break
 		} else if err != nil {
 			log.Fatal("Error reading streaming buffer, ", err)
 		}
 
-		InBuf := make([]byte, opuslen)
-		err = binary.Read(file, binary.LittleEndian, &InBuf)
+		/*
+			Common practice would be to have ONE large buffer and dynamically only send slices of it depending on the opuslen.
+			However, since golang can't pass slices over a channel, we need to create a brand new buffer every chunk and hope for gc to be able to handle it.
+		*/
 
-		vc.OpusSend <- InBuf
+		dynamicbuf := make([]byte, opuslen)
+
+		err = binary.Read(file, binary.LittleEndian, &dynamicbuf)
+
+		vc.OpusSend <- dynamicbuf
+
 	}
 
 	// Stop speaking
